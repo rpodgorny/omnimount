@@ -34,6 +34,7 @@ class LocalMount:
 	#enddef
 #endclass
 
+
 class RemoteMount:
 	def __init__(self, host, mount_dir):
 		self.host = host
@@ -80,6 +81,7 @@ class RemoteMount:
 	#enddef
 #endclass
 
+
 class UnionMount:
 	def __init__(self, mount_dir, branches):
 		self.mount_dir = mount_dir
@@ -92,7 +94,7 @@ class UnionMount:
 		except OSError: pass
 
 		print('mounting union')
-		union_str = ':'.join(self.branches)
+		union_str = ':'.join([i + '=RW' for i in self.branches])
 		self.process = subprocess.Popen('unionfs -o relaxed_permissions %s %s/union' % (union_str, self.mount_dir), shell=True)
 	#enddef
 
@@ -107,11 +109,13 @@ class UnionMount:
 	#enddef
 #endclass
 
+
 def is_local(host):
 	if socket.gethostname() in host: return True
 
 	return False
 #enddef
+
 
 def main():
 	list_fn = sys.argv[1]

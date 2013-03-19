@@ -125,6 +125,11 @@ def main():
 	hosts = [i.strip() for i in f.readlines()]
 	f.close()
 
+	if not os.path.isdir(mount_root):
+		print('%s does not exist, creating it' % mount_root)
+		os.mkdir(mount_root)
+	#endif
+
 	mounts = []
 
 	for host in hosts:

@@ -1,5 +1,16 @@
 #!/usr/bin/python3
 
+'''
+Usage:
+  omnimount [options] <mount_point>
+
+Arguments:
+  <mount_point>  Mount point.
+
+Options:
+  --list=<list>  Filename of remote host list. [default: list.txt]
+'''
+
 __version__ = '0.2'
 
 import sys
@@ -8,6 +19,8 @@ import os.path
 import subprocess
 import time
 import socket
+import docopt
+import logging
 
 
 class LocalMount:
@@ -24,12 +37,12 @@ class LocalMount:
 		try: os.unlink(self.mount_dir)
 		except: pass
 
-		print('symlinking local directory %s' % self.dir)
+		logging.info('symlinking local directory %s' % self.dir)
 		os.symlink(self.dir, self.mount_dir)
 	#enddef
 
 	def umount(self):
-		print('removing symlink for directory %s' % self.dir)
+		logging.info('removing symlink for directory %s' % self.dir)
 		os.unlink(self.mount_dir)
 	#enddef
 #endclass
@@ -49,7 +62,7 @@ class RemoteMount:
 
 		if ret is None: return
 
-		print('return code for %s is %s' % (self.host, ret))
+		logging.debug('return code for %s is %s' % (self.host, ret))
 
 		self.process = None
 
@@ -57,7 +70,7 @@ class RemoteMount:
 	#enddef
 
 	def mount(self):
-		print('mounting %s on %s' % (self.host, self.mount_dir))
+		logging.info('mounting %s on %s' % (self.host, self.mount_dir))
 
 		subprocess.call('fusermount -u %s' % self.mount_dir, shell=True)
 
@@ -74,7 +87,7 @@ class RemoteMount:
 			return
 		#endif
 
-		print('unmounting %s from %s' % (self.host, self.mount_dir))
+		logging.info('unmounting %s from %s' % (self.host, self.mount_dir))
 		self.process.terminate()
 		self.process.wait()
 		self.process = None
@@ -93,13 +106,13 @@ class UnionMount:
 		try: os.mkdir('%s/union' % self.mount_dir)
 		except OSError: pass
 
-		print('mounting union')
+		logging.info('mounting union')
 		union_str = ':'.join([i + '=RW' for i in self.branches])
 		self.process = subprocess.Popen('unionfs -o relaxed_permissions %s %s/union' % (union_str, self.mount_dir), shell=True)
 	#enddef
 
 	def umount(self):
-		print('terminating union mount')
+		logging.info('terminating union mount')
 		self.process.terminate()
 		self.process.wait()
 		self.process = None
@@ -117,16 +130,25 @@ def is_local(host):
 #enddef
 
 
+def logging_setup(level):
+	logging.basicConfig(level=level)
+#enddef
+
+
 def main():
-	list_fn = sys.argv[1]
-	mount_root = sys.argv[2]
+	args = docopt.docopt(__doc__, version=__version__)
+
+	logging_setup('DEBUG')
+
+	list_fn = args['--list'] 
+	mount_root = args['<mount_point>']
 
 	f = open(list_fn, 'r')
 	hosts = [i.strip() for i in f.readlines()]
 	f.close()
 
 	if not os.path.isdir(mount_root):
-		print('%s does not exist, creating it' % mount_root)
+		logging.info('%s does not exist, creating it' % mount_root)
 		os.mkdir(mount_root)
 	#endif
 
@@ -159,7 +181,7 @@ def main():
 				m.check()
 			#endfor
 
-			time.sleep(1)
+			time.sleep(1)  # TODO: hard-coded shit
 		#endwhile
 	except KeyboardInterrupt:
 		pass
@@ -167,7 +189,7 @@ def main():
 
 	union.umount()
 
-	for i in mounts:
+	for m in mounts:
 		m.umount()
 	#endfor
 #enddef

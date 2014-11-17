@@ -34,8 +34,12 @@ class LocalMount:
 	#enddef
 
 	def mount(self):
-		try: os.unlink(self.mount_dir)
-		except: pass
+		# TODO: do some checking and remove this try/except shit
+		try:
+			os.unlink(self.mount_dir)
+		except:
+			pass
+		#endtry
 
 		logging.info('symlinking local directory %s' % self.dir)
 		os.symlink(self.dir, self.mount_dir)
@@ -74,8 +78,12 @@ class RemoteMount:
 
 		subprocess.call('fusermount -u %s' % self.mount_dir, shell=True)
 
-		try: os.mkdir(self.mount_dir)
-		except OSError: pass
+		# TODO: actually check for existence and don't do this try/except shit
+		try:
+			os.mkdir(self.mount_dir)
+		except OSError:
+			pass
+		#endtry
 
 		cmd = 'sshfs -f -o reconnect,ConnectTimeout=2,CompressionLevel=1,ServerAliveInterval=10 %s %s' % (self.host, self.mount_dir)
 		self.process = subprocess.Popen(cmd, shell=True)
@@ -103,8 +111,12 @@ class UnionMount:
 	#enddef
 
 	def mount(self):
-		try: os.mkdir('%s/union' % self.mount_dir)
-		except OSError: pass
+		# TODO: actually check for existence and don't do this try/except shit
+		try:
+			os.mkdir('%s/union' % self.mount_dir)
+		except OSError:
+			pass
+		#endtry
 
 		logging.info('mounting union')
 		union_str = ':'.join([i + '=RW' for i in self.branches])
@@ -195,6 +207,7 @@ def main():
 		m.umount()
 	#endfor
 #enddef
+
 
 if __name__ == '__main__':
 	main()

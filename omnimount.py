@@ -30,7 +30,7 @@ class LocalMount:
 	#enddef
 
 	def check(self):
-		pass
+		return True
 	#enddef
 
 	def mount(self):
@@ -60,13 +60,13 @@ class RemoteMount:
 
 		ret = self.process.poll()
 
-		if ret is None: return
+		if ret is None: return True
 
 		logging.debug('return code for %s is %s' % (self.host, ret))
 
 		self.process = None
 
-		self.mount()
+		return False
 	#enddef
 
 	def mount(self):
@@ -178,7 +178,9 @@ def main():
 	try:
 		while 1:
 			for i in mounts:
-				m.check()
+				if not m.check():
+					m.mount()
+				#endif
 			#endfor
 
 			time.sleep(1)  # TODO: hard-coded shit

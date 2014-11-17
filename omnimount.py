@@ -60,7 +60,7 @@ class RemoteMount:
 	#enddef
 
 	def check(self):
-		if not self.process: return
+		if not self.process: return False
 
 		ret = self.process.poll()
 

@@ -1,4 +1,4 @@
-podgorny.cz:storage
+kapitan.podgorny.cz:storage
 milhouse.podgorny.cz:storage
 simir.podgorny.cz:storage
 pimiento.podgorny.cz:storage

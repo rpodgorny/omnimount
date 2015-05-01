@@ -85,7 +85,16 @@ class RemoteMount:
 			pass
 		#endtry
 
-		cmd = 'sshfs -f -o reconnect,ConnectTimeout=2,CompressionLevel=1,ServerAliveInterval=10 %s %s' % (self.host, self.mount_dir)
+		is_hpn = 'hpn' in subprocess.check_output('ssh -V 2>&1', shell=True).decode()
+
+		if is_hpn:
+			logging.debug('hpn detected')
+			cmd = 'sshfs -f -o reconnect -o ssh_command="ssh -oNoneEnabled=yes -oNoneSwitch=yes -oConnectTImeout=2 -oCompressionLevel=1 -oServerAliveInterval=10"  %s: %s' % (self.host, self.mount_dir)
+		else:
+			logging.debug('hpn not detected')
+			cmd = 'sshfs -f -o reconnect -oConnectTimeout=2 -oCompressionLevel=1 -oServerAliveInterval=10 %s %s' % (self.host, self.mount_dir)
+		#endif
+
 		self.process = subprocess.Popen(cmd, shell=True)
 	#enddef
 

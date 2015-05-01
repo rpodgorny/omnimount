@@ -1,6 +1,0 @@
-kapitan.podgorny.cz:storage
-milhouse.podgorny.cz:storage
-simir.podgorny.cz:storage
-pimiento.podgorny.cz:storage
-chuck.podgorny.cz:storage
-hubert.asterix.cz:storage

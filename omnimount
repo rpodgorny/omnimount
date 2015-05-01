@@ -8,7 +8,7 @@ Arguments:
   <mount_point>  Mount point.
 
 Options:
-  --list=<list>  Filename of remote host list. [default: list.txt]
+  --list=<list_file>  Filename of remote host list. [default: ~/.omnimount.conf]
 '''
 
 __version__ = '0.2'
@@ -152,7 +152,7 @@ def main():
 
 	logging_setup('DEBUG')
 
-	list_fn = args['--list'] 
+	list_fn = os.path.expanduser(args['--list'])
 	mount_root = args['<mount_point>']
 
 	f = open(list_fn, 'r')

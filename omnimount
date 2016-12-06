@@ -27,11 +27,9 @@ class LocalMount:
 	def __init__(self, dir, mount_dir):
 		self.dir = dir
 		self.mount_dir = mount_dir
-	#enddef
 
 	def check(self):
 		return True
-	#enddef
 
 	def mount(self):
 		# TODO: do some checking and remove this try/except shit
@@ -39,17 +37,13 @@ class LocalMount:
 			os.unlink(self.mount_dir)
 		except:
 			pass
-		#endtry
 
 		logging.info('symlinking local directory %s' % self.dir)
 		os.symlink(self.dir, self.mount_dir)
-	#enddef
 
 	def umount(self):
 		logging.info('removing symlink for directory %s' % self.dir)
 		os.unlink(self.mount_dir)
-	#enddef
-#endclass
 
 
 class RemoteMount:
@@ -57,21 +51,16 @@ class RemoteMount:
 		self.host = host
 		self.mount_dir = mount_dir
 		self.process = None
-	#enddef
 
 	def check(self):
-		if not self.process: return False
-
+		if not self.process:
+			return False
 		ret = self.process.poll()
-
-		if ret is None: return True
-
+		if ret is None:
+			return True
 		logging.debug('return code for %s is %s' % (self.host, ret))
-
 		self.process = None
-
 		return False
-	#enddef
 
 	def mount(self):
 		logging.info('mounting %s on %s' % (self.host, self.mount_dir))
@@ -83,7 +72,6 @@ class RemoteMount:
 			os.mkdir(self.mount_dir)
 		except OSError:
 			pass
-		#endtry
 
 		is_hpn = 'hpn' in subprocess.check_output('ssh -V 2>&1', shell=True).decode()
 
@@ -93,23 +81,18 @@ class RemoteMount:
 		else:
 			logging.debug('hpn not detected')
 			cmd = 'sshfs -f -o reconnect -oConnectTimeout=2 -oCompressionLevel=1 -oServerAliveInterval=10 %s %s' % (self.host, self.mount_dir)
-		#endif
 
 		self.process = subprocess.Popen(cmd, shell=True)
-	#enddef
 
 	def umount(self):
 		if not self.process:
 			print ('%s on %s already unmounted' % (self.host, self.mount_dir))
 			return
-		#endif
 
 		logging.info('unmounting %s from %s' % (self.host, self.mount_dir))
 		self.process.terminate()
 		self.process.wait()
 		self.process = None
-	#enddef
-#endclass
 
 
 class UnionMount:
@@ -117,7 +100,6 @@ class UnionMount:
 		self.mount_dir = mount_dir
 		self.branches = branches
 		self.process = None
-	#enddef
 
 	def mount(self):
 		# TODO: actually check for existence and don't do this try/except shit
@@ -125,12 +107,10 @@ class UnionMount:
 			os.mkdir('%s/union' % self.mount_dir)
 		except OSError:
 			pass
-		#endtry
 
 		logging.info('mounting union')
 		union_str = ':'.join([i + '=RW' for i in self.branches])
 		self.process = subprocess.Popen('unionfs -o relaxed_permissions %s %s/union' % (union_str, self.mount_dir), shell=True)
-	#enddef
 
 	def umount(self):
 		logging.info('terminating union mount')
@@ -140,20 +120,16 @@ class UnionMount:
 
 		# TODO: the above does not seem to work so call explicit unmount
 		subprocess.call('fusermount -u %s/union' % self.mount_dir, shell=True)
-	#enddef
-#endclass
 
 
 def is_local(host):
-	if socket.gethostname() in host: return True
-
+	if socket.gethostname() in host:
+		return True
 	return False
-#enddef
 
 
 def logging_setup(level):
 	logging.basicConfig(level=level)
-#enddef
 
 
 def main():
@@ -171,7 +147,6 @@ def main():
 	if not os.path.isdir(mount_root):
 		logging.info('%s does not exist, creating it' % mount_root)
 		os.mkdir(mount_root)
-	#endif
 
 	mounts = []
 
@@ -187,11 +162,9 @@ def main():
 			m = LocalMount(local_dir, mount_path)
 		else:
 			m = RemoteMount(host, mount_path)
-		#endif
 
 		m.mount()
 		mounts.append(m)
-	#endfor
 
 	union = UnionMount(mount_root, [i.mount_dir for i in mounts])
 	union.mount()
@@ -201,23 +174,15 @@ def main():
 			for i in mounts:
 				if not m.check():
 					m.mount()
-				#endif
-			#endfor
-
 			time.sleep(1)  # TODO: hard-coded shit
-		#endwhile
 	except KeyboardInterrupt:
 		pass
-	#endtry
 
 	union.umount()
 
 	for m in mounts:
 		m.umount()
-	#endfor
-#enddef
 
 
 if __name__ == '__main__':
 	main()
-#endif

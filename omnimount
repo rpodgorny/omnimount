@@ -9,6 +9,7 @@ Arguments:
 
 Options:
   --list=<list_file>  Filename of remote host list. [default: ~/.omnimount.conf]
+  --no-hpn            Don't use HPN even if detected.
 '''
 
 __version__ = '0.2'
@@ -47,9 +48,10 @@ class LocalMount:
 
 
 class RemoteMount:
-	def __init__(self, host, mount_dir):
+	def __init__(self, host, mount_dir, no_hpn=False):
 		self.host = host
 		self.mount_dir = mount_dir
+		self.no_hpn = no_hpn
 		self.process = None
 
 	def check(self):
@@ -73,15 +75,18 @@ class RemoteMount:
 		except OSError:
 			pass
 
-		is_hpn = 'hpn' in subprocess.check_output('ssh -V 2>&1', shell=True).decode()
+		if self.no_hpn:
+			is_hpn = False
+		else:
+			is_hpn = 'hpn' in subprocess.check_output('ssh -V 2>&1', shell=True).decode()
 
 		if is_hpn:
 			logging.debug('hpn detected')
 			cmd = 'sshfs -f -o reconnect -o ssh_command="ssh -oNoneEnabled=yes -oNoneSwitch=yes -oConnectTImeout=2 -oCompressionLevel=1 -oServerAliveInterval=10"  %s: %s' % (self.host, self.mount_dir)
 		else:
-			logging.debug('hpn not detected')
 			cmd = 'sshfs -f -o reconnect -oConnectTimeout=2 -oCompressionLevel=1 -oServerAliveInterval=10 %s %s' % (self.host, self.mount_dir)
 
+		print(cmd)
 		self.process = subprocess.Popen(cmd, shell=True)
 
 	def umount(self):
@@ -138,6 +143,7 @@ def main():
 	logging_setup('DEBUG')
 
 	list_fn = os.path.expanduser(args['--list'])
+	no_hpn = args['--no-hpn']
 	mount_root = args['<mount_point>']
 
 	f = open(list_fn, 'r')
@@ -161,7 +167,7 @@ def main():
 
 			m = LocalMount(local_dir, mount_path)
 		else:
-			m = RemoteMount(host, mount_path)
+			m = RemoteMount(host, mount_path, no_hpn)
 
 		m.mount()
 		mounts.append(m)

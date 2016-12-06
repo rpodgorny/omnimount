@@ -157,14 +157,15 @@ def main():
 	mounts = []
 
 	for host in hosts:
-		if host.startswith('#'): continue
+		if host.startswith('#'):
+			continue
 
 		mount_path = '%s/%s' % (mount_root, host.replace(':', '--').replace('/', '-'))
 
 		if is_local(host):
 			_, local_dir = host.split(':', 1)
-			if not local_dir.startswith('/'): local_dir = os.path.expanduser('~/%s' % local_dir)
-
+			if not local_dir.startswith('/'):
+				local_dir = os.path.expanduser('~/%s' % local_dir)
 			m = LocalMount(local_dir, mount_path)
 		else:
 			m = RemoteMount(host, mount_path, no_hpn)
@@ -177,17 +178,14 @@ def main():
 
 	try:
 		while 1:
-			for i in mounts:
-				if not m.check():
-					m.mount()
+			[i.mount() for i in mounts if not i.check()]
 			time.sleep(1)  # TODO: hard-coded shit
 	except KeyboardInterrupt:
 		pass
 
 	union.umount()
 
-	for m in mounts:
-		m.umount()
+	[i.umount() for i in mounts]
 
 
 if __name__ == '__main__':
